@@ -5,7 +5,7 @@
     Allow mermaid diagrams to be included in Sphinx-generated
     documents inline.
 
-    :copyright: Copyright 2016-2023 by Martín Gaitán and others
+    :copyright: Copyright 2016-2024 by Martín Gaitán and others
     :license: BSD, see LICENSE for details.
 """
 from __future__ import annotations
@@ -76,6 +76,7 @@ class Mermaid(Directive):
         "align": align_spec,
         "caption": directives.unchanged,
         "zoom": directives.unchanged,
+        "name": directives.unchanged,
     }
 
     def get_mm_code(self):
@@ -144,6 +145,7 @@ class Mermaid(Directive):
         if caption:
             node = figure_wrapper(self, node, caption)
 
+        self.add_name(node)
         return [node]
 
 
