@@ -142,7 +142,7 @@ class Mermaid(Directive):
             node["zoom_id"] = f"id-{uuid.uuid4()}"
 
         caption = self.options.get("caption")
-        if caption:
+        if caption is not None:
             node = figure_wrapper(self, node, caption)
 
         self.add_name(node)
@@ -232,30 +232,33 @@ def render_mm(self, code, options, _fmt, prefix="mermaid"):
     return relfn, outfn
 
 
-def _render_mm_html_raw(
-    self, node, code, options, prefix="mermaid", imgcls=None, alt=None
-):
-    if "align" in node and "zoom_id" in node:
-        tag_template = """<div align="{align}" id="{zoom_id}" class="mermaid align-{align}">
-            {code}
-        </div>
-        """
-    elif "align" in node and "zoom_id" not in node:
-        tag_template = """<div align="{align}" class="mermaid align-{align}">
-            {code}
-        </div>
-        """
-    elif "align" not in node and "zoom_id" in node:
-        tag_template = """<div id="{zoom_id}" class="mermaid">
-            {code}
-        </div>
-        """
-    else:
-        tag_template = """<div class="mermaid">
-            {code}
-        </div>"""
+def _render_mm_html_raw(self, node, code, options, prefix='mermaid',
+                   imgcls=None, alt=None):
+    classes = ["mermaid"]
+    attributes = {}
+
+    if 'align' in node:
+        classes.append("align-{}".format(node.get('align')))
+        attributes["align"] = node.get("align")
+
+    tag_template = """<div {attr_defs} class="{classes}">
+        {code}
+    </div>"""
+
+    ids = node.get('ids', [])
+    assert len(ids) <= 1
+
+    if ids:
+        attributes['id'] = ids[0]
+
+    attr_defs = ["{}=\"{}\"".format(k, v) for k, v in attributes.items()]
 
     self.body.append(
+        tag_template.format(
+            attr_defs=" ".join(attr_defs),
+            classes=" ".join(classes),
+            code=self.encode(code)
+        )
         tag_template.format(align=node.get("align"), zoom_id=node.get("zoom_id"), code=self.encode(code))
     )
     raise nodes.SkipNode
